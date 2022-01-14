@@ -1,3 +1,4 @@
+import os
 import json
 import random
 import pprint
@@ -52,7 +53,15 @@ if __name__ == '__main__':
     print()
     entity_count = 100
 
+    file_path = 'trip_data.json'
     entity_data = []
+    last_used_record_id = 0
+
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as f:
+            entity_data = json.load(f)
+            if entity_data:
+                last_used_record_id = entity_data[-1]['id']
 
     # Generate data with noise
     for entity_id in range(1, entity_count+1):
@@ -66,19 +75,21 @@ if __name__ == '__main__':
             std_deviation = 5
             actual_transit_time = random.gauss(average_transit_time, std_deviation)
             if actual_transit_time < 0:
-                actual_transit_time = 3
+                actual_transit_time = 0.5
 
-            data_point = {'entity_id': entity_id, 'origin_id': origin, 'destination_id': dest, 'travel_time': actual_transit_time}
+            last_used_record_id += 1
+            data_point = {'id': last_used_record_id, 'entity_id': entity_id, 'origin_id': origin, 'destination_id': dest, 'travel_time': actual_transit_time}
             entity_data.append(data_point)
 
-    file_path = 'trip_data.json'
     with open(file_path, 'w') as f:
         f.write('[\n')
-        for record in entity_data:
-            f.write(json.dumps(record) + ',\n')
+        for i, record in enumerate(entity_data):
+            if i == len(entity_data)-1:
+                f.write(json.dumps(record) + '\n')
+            else:
+                f.write(json.dumps(record) + ',\n')
         f.write(']')
 
-    #pprint.pprint(entity_data)
     print(f'Output to {file_path}')
 
 
