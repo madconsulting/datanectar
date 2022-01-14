@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pandas as pd
 import luigi
-import datanectar
 
 PROCESSED_DIR = 'processed'
 ROLLUP_DIR = 'rollups'
@@ -80,7 +79,6 @@ class RollupTask(luigi.Task):
 
     def output(self):
         return luigi.LocalTarget(self._output_path())
-
 
 if __name__ == '__main__':
     luigi.run()
