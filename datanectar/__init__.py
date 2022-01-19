@@ -57,13 +57,17 @@ def get_task_name(task_obj):
     return module_str.replace('.', '/')
 
 
-def get_output_dir(root, task_obj, output_type='local'):
+def get_output_dir(root, task_obj, output_type=None):
+    config = get_datanectar_config(root)
+    if not output_type:
+        output_type = config.get('output_type', 'local')
+
     task_name = get_task_name(task_obj)
-    print(f'task_name: {task_name}')
+
     if output_type == 'local':
         return get_task_name(task_obj)
     elif output_type == 's3':
-        bucket = get_datanectar_config(root).get('bucket', 'datanectar')
+        bucket = config.get('bucket', 'datanectar')
         return f's3://{bucket}/{task_name}'
 
 
@@ -125,6 +129,10 @@ if __name__ == '__main__':
     if root == 'test_root':
         sys.path.append(root)
         import etl.extract_task
-        task = etl.extract_task.ExtractTask()
-        output_dir = get_output_dir(root, task)
-        print(f'output_dir: {output_dir}')
+        import etl.rollup_task
+        task1 = etl.extract_task.ExtractTask()
+        task2 = etl.rollup_task.RollupTask()
+        output_dir = get_output_dir(root, task1)
+        print(f'output_dir for {task1}: {output_dir}')
+        output_dir2 = get_output_dir(root, task2)
+        print(f'output_dir for {task2}: {output_dir2}')
