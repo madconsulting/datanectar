@@ -8,17 +8,18 @@ with open('requirements.txt', 'r') as f:
 
 def get_version():
     version = {}
-    with open("trackerjacker/version.py") as fp:
+    with open("datanectar/version.py") as fp:
         exec(fp.read(), version)
     return version['__version__']
 
 
 def get_readme():
-    try:
-        import pypandoc
-        readme_data = pypandoc.convert('README.md', 'rst')
-    except(IOError, ImportError):
-        readme_data = open('README.md').read()
+    # There was a problem with the format
+    #try:
+    #    import pypandoc
+    #    readme_data = pypandoc.convert('README.md', 'rst')
+    #except(IOError, ImportError):
+    readme_data = open('README.md').read()
     return readme_data
 
 
@@ -30,7 +31,7 @@ setup(
     description = 'Artifact tracking for luigi',
     long_description = get_readme(),
     author = 'Wes Madrigal, Caleb Madrigal',
-    author_email = 'caleb.madrigal@gmail.com',
+    author_email = 'admin@madconsulting.ai',
     license = 'MIT',
     keywords = ['data', 'luigi', 'ml'],
     install_requires = requirements,
