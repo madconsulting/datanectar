@@ -70,12 +70,13 @@ def get_output_dir(root, task_obj, output_type=None):
         output_type = config.get('output_type', 'local')
 
     task_name = get_task_name(task_obj)
+    task_version = get_task_version(task_obj)
 
     if output_type == 'local':
-        return get_task_name(task_obj)
+        return f'{task_name}/{task_version}'
     elif output_type == 's3':
         bucket = config.get('bucket', 'datanectar')
-        return f's3://{bucket}/{task_name}'
+        return f's3://{bucket}/{task_name}/{task_version}'
 
 
 def get_datanectar_env_vars():
@@ -135,6 +136,7 @@ if __name__ == '__main__':
     # Testing calling datanectar and passing in Luigi task
     if root == 'test_root':
         sys.path.append(root)
+        import datetime
         import etl.extract_task
         import etl.rollup_task
         extract_task = etl.extract_task.ExtractTask()
@@ -149,3 +151,7 @@ if __name__ == '__main__':
 
         task_version = get_task_version(rollup_task)
         print(f'task_version for {rollup_task}: {task_version}')
+
+        rollup_task_date = etl.rollup_task.RollupTask(date_param=datetime.date(2022, 1, 10))
+        output_dir_date = get_output_dir(root, rollup_task_date, output_type='s3')
+        print(f'output_dir for {rollup_task_date}: {output_dir_date}')
