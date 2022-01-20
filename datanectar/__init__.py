@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import pathlib
+import hashlib
 import logging
 import luigi
 import luigi.contrib.s3 as luigi_s3
@@ -55,6 +56,12 @@ def get_task_name(task_obj):
     #if isinstance(task_file_or_obj, luigi.Task):
     module_str = task_obj.__module__
     return module_str.replace('.', '/')
+
+
+def get_task_version(task_obj):
+    params_dict = task_obj.to_str_params()
+    value = json.dumps(params_dict, sort_keys=True).encode()
+    return hashlib.md5(value).hexdigest()
 
 
 def get_output_dir(root, task_obj, output_type=None):
@@ -130,9 +137,15 @@ if __name__ == '__main__':
         sys.path.append(root)
         import etl.extract_task
         import etl.rollup_task
-        task1 = etl.extract_task.ExtractTask()
-        task2 = etl.rollup_task.RollupTask()
-        output_dir = get_output_dir(root, task1)
-        print(f'output_dir for {task1}: {output_dir}')
-        output_dir2 = get_output_dir(root, task2)
-        print(f'output_dir for {task2}: {output_dir2}')
+        extract_task = etl.extract_task.ExtractTask()
+        rollup_task = etl.rollup_task.RollupTask()
+        output_dir = get_output_dir(root, extract_task)
+        print(f'output_dir for {extract_task}: {output_dir}')
+        output_dir2 = get_output_dir(root, rollup_task)
+        print(f'output_dir for {rollup_task}: {output_dir2}')
+
+        output_dir3 =  get_output_dir(root, rollup_task, output_type='local')
+        print(f'output_dir for {rollup_task} (for output_type=local) = {output_dir3}')
+
+        task_version = get_task_version(rollup_task)
+        print(f'task_version for {rollup_task}: {task_version}')
