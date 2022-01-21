@@ -99,7 +99,7 @@ def get_s3_client():
 def get_luigi_output_target(root, task_obj, output_type=None, filename=None):
     output_path = get_output_dir(root, task_obj, output_type)
     if filename:
-        output_path = output_path / filename
+        output_path = f'{output_path}/{filename}'
 
     if not output_type:
         config = get_datanectar_config(root)

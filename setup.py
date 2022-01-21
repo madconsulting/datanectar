@@ -14,12 +14,12 @@ def get_version():
 
 
 def get_readme():
-    # There was a problem with the format
     #try:
     #    import pypandoc
     #    readme_data = pypandoc.convert('README.md', 'rst')
     #except(IOError, ImportError):
-    readme_data = open('README.md').read()
+    #    readme_data = open('README.md').read()
+    readme_data = 'datanectar'
     return readme_data
 
 
