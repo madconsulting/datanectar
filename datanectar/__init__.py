@@ -13,11 +13,11 @@ DATANECTAR_LOG_FILENAME = 'datanectar.log'
 DATANECTAR_LOG_PATH = os.path.abspath(DATANECTAR_LOG_FILENAME)
 
 # Setup logging
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)  # TODO: Set to critical
-file_log_handler = logging.FileHandler(DATANECTAR_LOG_PATH)
-logger.addHandler(file_log_handler)
-logger.addHandler(logging.StreamHandler(sys.stdout))
+#logger = logging.getLogger()
+#logger.setLevel(logging.DEBUG)  # TODO: Set to critical
+#file_log_handler = logging.FileHandler(DATANECTAR_LOG_PATH)
+#logger.addHandler(file_log_handler)
+#logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
 def get_datanectar_config(root):
@@ -106,7 +106,7 @@ def get_luigi_output_target(root, task_obj, output_type=None, filename=None):
         if 'output_type' in config:
             output_type = config['output_type']
         else:
-            logger.log(f'(Root={root}) No output_type specified - using default: "local"')
+            #logger.debug(f'(Root={root}) No output_type specified - using default: "local"')
             output_type = 'local'
 
     if output_type == 'local':
