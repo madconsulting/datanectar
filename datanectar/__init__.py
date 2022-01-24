@@ -11,6 +11,7 @@ import luigi.contrib.s3 as luigi_s3
 DATANECTAR_CONFIG_FILENAME = 'datanectar.json'
 DATANECTAR_LOG_FILENAME = 'datanectar.log'
 DATANECTAR_LOG_PATH = os.path.abspath(DATANECTAR_LOG_FILENAME)
+DATANECTAR_ARGS_FILENAME = 'luigi_args.json'
 
 # Setup logging
 #logger = logging.getLogger()
@@ -64,7 +65,7 @@ def get_task_version(task_obj):
     return hashlib.md5(value).hexdigest()
 
 
-def get_output_dir(root, task_obj, output_type=None):
+def get_output_dir(root, task_obj, output_type=None, save_args=True):
     config = get_datanectar_config(root)
     if not output_type:
         output_type = config.get('output_type', 'local')
@@ -73,10 +74,20 @@ def get_output_dir(root, task_obj, output_type=None):
     task_version = get_task_version(task_obj)
 
     if output_type == 'local':
-        return f'{task_name}/{task_version}'
+        output_dir = f'{task_name}/{task_version}'
+        if save_args:
+            os.makedirs(output_dir, exist_ok=True)
+            args_file_path = f'{output_dir}/{DATANECTAR_ARGS_FILENAME}'
+            args_dict = task_obj.to_str_params()
+            with open(args_file_path, 'w') as f:
+                json.dump(args_dict, f, sort_keys=True)
     elif output_type == 's3':
         bucket = config.get('bucket', 'datanectar')
-        return f's3://{bucket}/{task_name}/{task_version}'
+        output_dir = f's3://{bucket}/{task_name}/{task_version}'
+        if save_args:
+            print('TODO: Save args in s3')  # TODO
+
+    return output_dir
 
 
 def get_datanectar_env_vars():
