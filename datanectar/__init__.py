@@ -65,7 +65,7 @@ def get_task_version(task_obj):
     return hashlib.md5(value).hexdigest()
 
 
-def get_output_dir(root, task_obj, output_type=None, save_args=True):
+def get_output_dir(root, task_obj, output_type=None, save_args=True, without_version=False):
     config = get_datanectar_config(root)
     if not output_type:
         output_type = config.get('output_type', 'local')
@@ -73,8 +73,14 @@ def get_output_dir(root, task_obj, output_type=None, save_args=True):
     task_name = get_task_name(task_obj)
     task_version = get_task_version(task_obj)
 
+    # Option to leave off the version hash, which is useful for storing a "latest" in the task_name dir
+    if without_version:
+        relative_path = task_name
+    else:
+        relative_path = f'{task_name}/{task_version}'
+
     if output_type == 'local':
-        output_dir = f'{task_name}/{task_version}'
+        output_dir = relative_path
         if save_args:
             os.makedirs(output_dir, exist_ok=True)
             args_file_path = f'{output_dir}/{DATANECTAR_ARGS_FILENAME}'
@@ -83,7 +89,7 @@ def get_output_dir(root, task_obj, output_type=None, save_args=True):
                 json.dump(args_dict, f, sort_keys=True)
     elif output_type == 's3':
         bucket = config.get('bucket', 'datanectar')
-        output_dir = f's3://{bucket}/{task_name}/{task_version}'
+        output_dir = f's3://{bucket}/{relative_path}'
         if save_args:
             print('TODO: Save args in s3')  # TODO
 
@@ -107,13 +113,13 @@ def get_s3_client():
         return s3client
 
 
-def get_luigi_output_target(root, task_obj, output_type=None, filename=None):
-    output_path = get_output_dir(root, task_obj, output_type)
+def get_luigi_output_target(root, task_obj, output_type=None, filename=None, without_version=False):
+    config = get_datanectar_config(root)
+    output_path = get_output_dir(root, task_obj, output_type, without_version=without_version)
     if filename:
         output_path = f'{output_path}/{filename}'
 
     if not output_type:
-        config = get_datanectar_config(root)
         if 'output_type' in config:
             output_type = config['output_type']
         else:
@@ -123,6 +129,7 @@ def get_luigi_output_target(root, task_obj, output_type=None, filename=None):
     if output_type == 'local':
         return luigi.LocalTarget(output_path)
     elif output_type == 's3':
+        bucket_name = config.get('bucket', 'datanectar')
         return luigi_s3.S3Target(output_path, client=get_s3_client())
 
 
@@ -166,3 +173,6 @@ if __name__ == '__main__':
         rollup_task_date = etl.rollup_task.RollupTask(date_param=datetime.date(2022, 1, 10))
         output_dir_date = get_output_dir(root, rollup_task_date, output_type='s3')
         print(f'output_dir for {rollup_task_date}: {output_dir_date}')
+
+        output_dir_without_version= get_output_dir(root, rollup_task_date, output_type='s3', without_version=True)
+        print(f'output_dir without version for {rollup_task_date}: {output_dir_without_version}')
