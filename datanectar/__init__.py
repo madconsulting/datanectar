@@ -11,7 +11,7 @@ import luigi.contrib.s3 as luigi_s3
 DATANECTAR_CONFIG_FILENAME = 'datanectar.json'
 DATANECTAR_LOG_FILENAME = 'datanectar.log'
 DATANECTAR_LOG_PATH = os.path.abspath(DATANECTAR_LOG_FILENAME)
-DATANECTAR_ARGS_FILENAME = 'luigi_args.json'
+TASK_PARAMS_FILENAME = 'task_params.json'
 
 # Setup logging
 #logger = logging.getLogger()
@@ -65,6 +65,16 @@ def get_task_version(task_obj):
     return hashlib.md5(value).hexdigest()
 
 
+def save_task_params_to_s3(s3_output_path, task_obj):
+    try:
+        params_dict = task_obj.to_str_params()
+        params_file_path = f'{s3_output_path}/{TASK_PARAMS_FILENAME}'
+        params_json = json.dumps(params_dict, sort_keys=True)
+        get_s3_client().put_string(params_json, params_file_path)
+    except Exception as e:
+        print(f'Error saving task params: {e}')
+
+
 def get_output_dir(root, task_obj, output_type=None, save_args=True, without_version=False):
     config = get_datanectar_config(root)
     if not output_type:
@@ -81,17 +91,20 @@ def get_output_dir(root, task_obj, output_type=None, save_args=True, without_ver
 
     if output_type == 'local':
         output_dir = relative_path
+
         if save_args:
             os.makedirs(output_dir, exist_ok=True)
-            args_file_path = f'{output_dir}/{DATANECTAR_ARGS_FILENAME}'
-            args_dict = task_obj.to_str_params()
-            with open(args_file_path, 'w') as f:
-                json.dump(args_dict, f, sort_keys=True)
+            params_file_path = f'{output_dir}/{TASK_PARAMS_FILENAME}'
+            params_dict = task_obj.to_str_params()
+            with open(params_file_path, 'w') as f:
+                json.dump(params_dict, f, sort_keys=True)
+
     elif output_type == 's3':
         bucket = config.get('bucket', 'datanectar')
         output_dir = f's3://{bucket}/{relative_path}'
+
         if save_args:
-            print('TODO: Save args in s3')  # TODO
+            save_task_params_to_s3(output_dir, task_obj)
 
     return output_dir
 
@@ -111,6 +124,7 @@ def get_s3_client():
         aws_secret_key = dn_env_vars['DN_AWS_SECRET_ACCESS_KEY']
         s3client = luigi_s3.S3Client(aws_access_key, aws_secret_key)
         return s3client
+    return None
 
 
 def get_luigi_output_target(root, task_obj, output_type=None, filename=None, without_version=False):
