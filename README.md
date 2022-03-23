@@ -11,6 +11,11 @@
 
 ## PyPI push
 
+    python3 setup.py build
+    twine upload dist/*
+
+Old way:
+
     python3 setup.py sdist upload -r pypi
 
 ### Dependency based task chain execution workflow
