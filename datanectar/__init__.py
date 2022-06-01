@@ -52,9 +52,6 @@ def get_task_names_in_root(root):
 
 def get_task_name(task_obj):
     """eta/extract_task.py -> 'eta/extract_task"""
-    #print(f'get_task_name({task_obj}')
-    #print('.file = {}'.format(task_obj.__module__))
-    #if isinstance(task_file_or_obj, luigi.Task):
     module_str = task_obj.__module__
     return module_str.replace('.', '/')
 
@@ -101,6 +98,9 @@ def get_output_dir(root, task_obj, output_type=None, save_args=True, without_ver
 
     elif output_type == 's3':
         bucket = config.get('bucket', 'datanectar')
+        is_env = config.get('is_env', False)
+        if is_env:
+            bucket = os.getenv(bucket)
         output_dir = f's3://{bucket}/{relative_path}'
 
         if save_args:
