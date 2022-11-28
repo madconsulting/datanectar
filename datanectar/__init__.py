@@ -13,12 +13,6 @@ DATANECTAR_LOG_FILENAME = 'datanectar.log'
 DATANECTAR_LOG_PATH = os.path.abspath(DATANECTAR_LOG_FILENAME)
 TASK_PARAMS_FILENAME = 'task_params.json'
 
-# Setup logging
-#logger = logging.getLogger()
-#logger.setLevel(logging.DEBUG)  # TODO: Set to critical
-#file_log_handler = logging.FileHandler(DATANECTAR_LOG_PATH)
-#logger.addHandler(file_log_handler)
-#logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
 def get_datanectar_config(root):
@@ -50,10 +44,14 @@ def get_task_names_in_root(root):
     return task_list
 
 
-def get_task_name(task_obj):
+def get_task_name(task_obj, endswith='_task.py'):
     """eta/extract_task.py -> 'eta/extract_task"""
-    module_str = task_obj.__module__
-    return module_str.replace('.', '/')
+    module_str = sys.modules[task_obj.__module__].__file__
+    if module_str.endswith(endswith):
+        return module_str.split('/')[0].split('.')[0]
+    else:
+        module_str = task_obj.__module__
+        return module_str.replace('.', '/')
 
 
 def get_task_version(task_obj):
@@ -72,7 +70,17 @@ def save_task_params_to_s3(s3_output_path, task_obj):
         print(f'Error saving task params: {e}')
 
 
-def get_output_dir(root, task_obj, output_type=None, save_args=True, without_version=False):
+def get_output_dir(
+        root, 
+        task_obj, 
+        output_type=None, 
+        save_args=True, 
+        without_version=False,
+        local_root=None
+        ) -> str:
+    """
+Directory for a given task object's output
+    """
     config = get_datanectar_config(root)
     if not output_type:
         output_type = config.get('output_type', 'local')
@@ -88,13 +96,16 @@ def get_output_dir(root, task_obj, output_type=None, save_args=True, without_ver
 
     if output_type == 'local':
         output_dir = relative_path
-
         if save_args:
             os.makedirs(output_dir, exist_ok=True)
             params_file_path = f'{output_dir}/{TASK_PARAMS_FILENAME}'
             params_dict = task_obj.to_str_params()
             with open(params_file_path, 'w') as f:
                 json.dump(params_dict, f, sort_keys=True)
+
+        if local_root:
+            return local_root + '/' + output_dir
+
 
     elif output_type == 's3':
         bucket = config.get('bucket', 'datanectar')
@@ -137,7 +148,6 @@ def get_luigi_output_target(root, task_obj, output_type=None, filename=None, wit
         if 'output_type' in config:
             output_type = config['output_type']
         else:
-            #logger.debug(f'(Root={root}) No output_type specified - using default: "local"')
             output_type = 'local'
 
     if output_type == 'local':
