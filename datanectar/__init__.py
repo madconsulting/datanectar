@@ -46,11 +46,15 @@ def get_task_names_in_root(root):
 
 def get_task_name(task_obj, endswith='_task.py'):
     """eta/extract_task.py -> 'eta/extract_task"""
-    module_str = sys.modules[task_obj.__module__].__file__
-    if module_str.endswith(endswith):
-        return module_str.split('/')[0].split('.')[0]
+    module_str = task_obj.__module__
+    if module_str == '__main__':
+        fpath = sys.modules[task_obj.__module__].__file__
+        parts = fpath.split('/')
+        if root:
+            rel = parts[parts.index(root):]
+            rel[-1] = rel[-1].split('.')[0]
+            return '/'.join(rel)
     else:
-        module_str = task_obj.__module__
         return module_str.replace('.', '/')
 
 
